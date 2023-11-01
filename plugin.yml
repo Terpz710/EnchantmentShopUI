@@ -1,0 +1,11 @@
+name: EnchantmentShop
+version: 1.0.0
+author: Terpz710
+api: 5.0.0
+main: Terpz710\EnchantmentShop\Main
+description: Adds an enchantment shop using a UI, MultiEconomy.
+
+permissions:
+  enchantmentshop.cmd:
+    description: the permission.
+    default: true
