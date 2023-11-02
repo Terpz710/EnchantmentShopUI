@@ -11,7 +11,6 @@ use pocketmine\plugin\Plugin;
 use pocketmine\utils\Config;
 use pocketmine\item\enchantment\StringToEnchantmentParser;
 use pocketmine\item\enchantment\EnchantInstance;
-
 use jojoe77777\FormAPI\CustomForm;
 use jojoe77777\FormAPI\SimpleForm;
 use davidglitch04\libEco\libEco;
