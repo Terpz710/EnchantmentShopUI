@@ -13,80 +13,61 @@ use pocketmine\item\enchantment\StringToEnchantmentParser;
 use pocketmine\item\enchantment\EnchantInstance;
 use jojoe77777\FormAPI\CustomForm;
 use jojoe77777\FormAPI\SimpleForm;
-use davidglitch04\libEco\libEco;
 
 class EShopCommand extends Command {
     private $plugin;
     private $enchantments = [];
-    private $libEco;
 
-    public function __construct(Plugin $plugin, libEco $libEco) {
+    public function __construct(Plugin $plugin) {
         parent::__construct("eshop", "Open the Enchantment Shop");
         $this->setPermission("enchantmentshop.cmd");
         $this->plugin = $plugin;
-        $this->libEco = $libEco;
+        $this->loadEnchantments(); // Load enchantments from the config file in the constructor.
+    }
+
+    private function loadEnchantments() {
+        $config = new Config($this->plugin->getDataFolder() . "Shop.yml", Config::YAML);
+        $enchantmentData = $config->get("enchantments", []);
+
+        foreach ($enchantmentData as $enchantment) {
+            if (isset($enchantment["name"], $enchantment["price"])) {
+                $this->enchantments[] = [
+                    "name" => $enchantment["name"],
+                    "price" => (float) $enchantment["price"]
+                ];
+            }
+        }
     }
 
     public function execute(CommandSender $sender, string $label, array $args) {
         if ($sender instanceof Player) {
-            if ($this->libEco->isInstall()) {
-                $form = new SimpleForm(function (Player $player, ?int $data) use ($args) {
-                    if ($data === null) {
-                        return;
-                    }
-
-                    if (isset($this->enchantments[$data])) {
-                        $selectedEnchantment = $this->enchantments[$data];
-                        $enchantmentName = $selectedEnchantment["name"];
-                        $enchantmentPrice = $selectedEnchantment["price"];
-
-                        if (isset($args[0]) && is_numeric($args[0]) && $args[0] > 0) {
-                            $amount = (float) $args[0];
-                            $this->libEco->myMoney($player, function ($money) use ($player, $enchantmentName, $enchantmentPrice, $selectedEnchantment, $amount) {
-                                if ($money >= $enchantmentPrice * $amount) {
-                                    $levelForm = new CustomForm(function (Player $player, array $data) use ($enchantmentName, $selectedEnchantment, $amount) {
-                                        if (isset($data[0])) {
-                                            $selectedLevel = (int) $data[0];
-                                            $this->applyEnchantment($player, $enchantmentName, $selectedEnchantment, $selectedLevel, $amount);
-                                        }
-                                    });
-                                    $levelForm->setTitle("Enchantment Level");
-                                    $levelForm->addLabel("Select the level for $enchantmentName:");
-                                    $levelForm->addSlider("Level", 1, 10, 1, 1);
-                                    $player->sendForm($levelForm);
-                                } else {
-                                    $player->sendMessage("You don't have enough money to purchase $enchantmentName.");
-                                }
-                            });
-                        } else {
-                            $player->sendMessage("Invalid amount provided. Please enter a valid numeric value greater than 0.");
-                        }
-                    }
-                });
-
-                $config = new Config($this->plugin->getDataFolder() . "Shop.yml", Config::YAML);
-                $enchantmentData = $config->get("enchantments", []);
-
-                foreach ($enchantmentData as $enchantment) {
-                    if (isset($enchantment["name"], $enchantment["price"])) {
-                        $this->enchantments[] = [
-                            "name" => $enchantment["name"],
-                            "price" => (float) $enchantment["price"]
-                        ];
-                    }
+            $form = new SimpleForm(function (Player $player, ?int $data) use ($args) {
+                if ($data === null) {
+                    return;
                 }
 
-                $form->setTitle("Enchantment Shop");
-                $form->setContent("Choose an enchantment to purchase:");
-                foreach ($this->enchantments as $enchantment) {
-                    $enchantmentName = $enchantment["name"];
-                    $form->addButton("$enchantmentName - {$enchantment["price"]} coins");
-                }
+                if (isset($this->enchantments[$data])) {
+                    $selectedEnchantment = $this->enchantments[$data];
+                    $enchantmentName = $selectedEnchantment["name"];
+                    $enchantmentPrice = $selectedEnchantment["price"];
 
-                $sender->sendForm($form);
-            } else {
-                $sender->sendMessage("Economy plugin is not installed. Unable to make purchases.");
+                    if (isset($args[0]) && is_numeric($args[0]) && $args[0] > 0) {
+                        $amount = (float) $args[0];
+                        $this->applyEnchantment($player, $enchantmentName, $selectedEnchantment, $amount);
+                    } else {
+                        $player->sendMessage("Invalid amount provided. Please enter a valid numeric value greater than 0.");
+                    }
+                }
+            });
+
+            $form->setTitle("Enchantment Shop");
+            $form->setContent("Choose an enchantment to purchase:");
+            foreach ($this->enchantments as $enchantment) {
+                $enchantmentName = $enchantment["name"];
+                $form->addButton("$enchantmentName - {$enchantment["price"]} coins");
             }
+
+            $sender->sendForm($form);
         } else {
             $sender->sendMessage("You must run this command in-game.");
         }
@@ -94,25 +75,18 @@ class EShopCommand extends Command {
         return true;
     }
 
-    private function applyEnchantment(Player $player, string $enchantmentName, array $selectedEnchantment, int $selectedLevel, float $amount) {
+    private function applyEnchantment(Player $player, string $enchantmentName, array $selectedEnchantment, float $amount) {
         $item = $player->getInventory()->getItemInHand();
 
         $enchantment = StringToEnchantmentParser::getInstance()->parse($selectedEnchantment["name"]);
 
         if ($enchantment !== null) {
-            $enchantInstance = EnchantInstance::getEnchantInstance($enchantment, $selectedLevel);
+            $enchantInstance = EnchantInstance::getEnchantInstance($enchantment, 1);
 
             if ($enchantInstance !== null) {
                 $item->addEnchantment($enchantInstance);
                 $player->getInventory()->setItemInHand($item);
-
-                $this->libEco->reduceMoney($player, $enchantmentPrice * $amount, function ($success) use ($player, $enchantmentName) {
-                    if ($success) {
-                        $player->sendMessage("You purchased $enchantmentName for " . ($enchantmentPrice * $amount) . " coins.");
-                    } else {
-                        $player->sendMessage("Failed to purchase $enchantmentName. Please try again later.");
-                    }
-                });
+                $player->sendMessage("You applied $enchantmentName to your item.");
             } else {
                 $player->sendMessage("Failed to apply the enchantment. Please try again later.");
             }
