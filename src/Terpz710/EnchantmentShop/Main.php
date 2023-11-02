@@ -15,5 +15,12 @@ class Main extends PluginBase {
         $this->saveResource("Shop.yml");
         $libEco = new libEco();
         $this->getServer()->getCommandMap()->register("eshop", new EShopCommand($this, $libEco));
+       if (class_exists(libEco::class)) {
+            $libEco = new libEco();
+            $this->getServer()->getCommandMap()->register("eshop", new EShopCommand($this, $libEco));
+            $this->getLogger()->info("libEco integration successful.");
+        } else {
+            $this->getLogger()->warning("libEco class not found. Make sure you have libEco installed.");
+        }
     }
 }
