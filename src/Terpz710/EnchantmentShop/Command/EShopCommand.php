@@ -11,7 +11,6 @@ use pocketmine\plugin\Plugin;
 use pocketmine\utils\Config;
 use pocketmine\item\enchantment\StringToEnchantmentParser;
 use pocketmine\item\enchantment\EnchantmentInstance;
-
 use jojoe77777\FormAPI\CustomForm;
 use jojoe77777\FormAPI\SimpleForm;
 
@@ -50,7 +49,7 @@ class EShopCommand extends Command {
                     $selectedEnchantment = $this->enchantments[$data];
                     $enchantmentName = $selectedEnchantment["name"];
 
-                    $this->applyEnchantment($player, $enchantmentName);
+                    $this->applyEnchantment($player, $enchantmentName, 1);
                 }
             });
 
@@ -69,21 +68,16 @@ class EShopCommand extends Command {
         return true;
     }
 
-    private function applyEnchantment(Player $player, string $enchantmentName) {
+    public function applyEnchantment(Player $player, string $enchantmentName, int $level) {
         $item = $player->getInventory()->getItemInHand();
 
         $enchantment = StringToEnchantmentParser::getInstance()->parse($enchantmentName);
 
         if ($enchantment !== null) {
-            $enchantInstance = new EnchantmentInstance($enchantment, 1);
-
-            if ($enchantInstance !== null) {
-                $item->addEnchantment($enchantInstance);
-                $player->getInventory()->setItemInHand($item);
-                $player->sendMessage("You applied $enchantmentName to your item.");
-            } else {
-                $player->sendMessage("Failed to apply the enchantment. Please try again later.");
-            }
+            $enchantmentInstance = new EnchantmentInstance($enchantment, $level);
+            $item->addEnchantment($enchantmentInstance);
+            $player->getInventory()->setItemInHand($item);
+            $player->sendMessage("You applied $enchantmentName to your item.");
         } else {
             $player->sendMessage("Invalid enchantment selected. Please try again.");
         }
