@@ -10,8 +10,5 @@
 
 enchantments:
   - name: "unbreaking"
-    price: 15000
   - name: "knockback"
-    price: 20000
   - name: "sharpness"
-    price: 25000
