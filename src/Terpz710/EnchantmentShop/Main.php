@@ -11,9 +11,16 @@ use davidglitch04\libEco\libEco;
 class Main extends PluginBase {
 
     public function onEnable(): void {
+        $libEco = new libEco();
+
+        if ($libEco->isInstall()) {
+            $this->getLogger()->info("libEco is installed and working.");
+        } else {
+            $this->getLogger()->error("libEco is not properly installed or configured.");
+            return;
+        }
         $this->saveDefaultConfig();
         $this->saveResource("Shop.yml");
-        $libEco = new libEco();
         $this->getServer()->getCommandMap()->register("eshop", new EShopCommand($this, $libEco));
     }
 }
