@@ -22,7 +22,7 @@ class EShopCommand extends Command {
         parent::__construct("eshop", "Open the Enchantment Shop");
         $this->setPermission("enchantmentshop.cmd");
         $this->plugin = $plugin;
-        $this->loadEnchantments(); // Load enchantments from the config file in the constructor.
+        $this->loadEnchantments();
     }
 
     private function loadEnchantments() {
@@ -30,10 +30,9 @@ class EShopCommand extends Command {
         $enchantmentData = $config->get("enchantments", []);
 
         foreach ($enchantmentData as $enchantment) {
-            if (isset($enchantment["name"], $enchantment["price"])) {
+            if (isset($enchantment["name"])) {
                 $this->enchantments[] = [
-                    "name" => $enchantment["name"],
-                    "price" => (float) $enchantment["price"]
+                    "name" => $enchantment["name"]
                 ];
             }
         }
@@ -49,22 +48,16 @@ class EShopCommand extends Command {
                 if (isset($this->enchantments[$data])) {
                     $selectedEnchantment = $this->enchantments[$data];
                     $enchantmentName = $selectedEnchantment["name"];
-                    $enchantmentPrice = $selectedEnchantment["price"];
 
-                    if (isset($args[0]) && is_numeric($args[0]) && $args[0] > 0) {
-                        $amount = (float) $args[0];
-                        $this->applyEnchantment($player, $enchantmentName, $selectedEnchantment, $amount);
-                    } else {
-                        $player->sendMessage("Invalid amount provided. Please enter a valid numeric value greater than 0.");
-                    }
+                    $this->applyEnchantment($player, $enchantmentName);
                 }
             });
 
             $form->setTitle("Enchantment Shop");
-            $form->setContent("Choose an enchantment to purchase:");
+            $form->setContent("Choose an enchantment to apply:");
             foreach ($this->enchantments as $enchantment) {
                 $enchantmentName = $enchantment["name"];
-                $form->addButton("$enchantmentName - {$enchantment["price"]} coins");
+                $form->addButton($enchantmentName);
             }
 
             $sender->sendForm($form);
@@ -75,10 +68,10 @@ class EShopCommand extends Command {
         return true;
     }
 
-    private function applyEnchantment(Player $player, string $enchantmentName, array $selectedEnchantment, float $amount) {
+    private function applyEnchantment(Player $player, string $enchantmentName) {
         $item = $player->getInventory()->getItemInHand();
 
-        $enchantment = StringToEnchantmentParser::getInstance()->parse($selectedEnchantment["name"]);
+        $enchantment = StringToEnchantmentParser::getInstance()->parse($enchantmentName);
 
         if ($enchantment !== null) {
             $enchantInstance = EnchantInstance::getEnchantInstance($enchantment, 1);
