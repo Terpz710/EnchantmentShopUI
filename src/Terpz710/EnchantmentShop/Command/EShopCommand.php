@@ -75,7 +75,7 @@ class EShopCommand extends Command {
         $enchantment = StringToEnchantmentParser::getInstance()->parse($enchantmentName);
 
         if ($enchantment !== null) {
-            $enchantInstance = EnchantmentInstance($enchantment, 1);
+            $enchantInstance = new EnchantmentInstance($enchantment, 1);
 
             if ($enchantInstance !== null) {
                 $item->addEnchantment($enchantInstance);
