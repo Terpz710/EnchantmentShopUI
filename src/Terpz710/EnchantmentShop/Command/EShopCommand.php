@@ -11,6 +11,7 @@ use pocketmine\plugin\Plugin;
 use pocketmine\utils\Config;
 use pocketmine\item\enchantment\StringToEnchantmentParser;
 use pocketmine\item\enchantment\EnchantmentInstance;
+
 use jojoe77777\FormAPI\CustomForm;
 use jojoe77777\FormAPI\SimpleForm;
 
@@ -30,9 +31,11 @@ class EShopCommand extends Command {
         $enchantmentData = $config->get("enchantments", []);
 
         foreach ($enchantmentData as $enchantment) {
-            if (isset($enchantment["name"])) {
+            if (isset($enchantment["name"], $enchantment["button"], $enchantment["level"])) {
                 $this->enchantments[] = [
-                    "name" => $enchantment["name"]
+                    "name" => $enchantment["name"],
+                    "button" => $enchantment["button"],
+                    "level" => (int)$enchantment["level"]
                 ];
             }
         }
@@ -48,15 +51,16 @@ class EShopCommand extends Command {
                 if (isset($this->enchantments[$data])) {
                     $selectedEnchantment = $this->enchantments[$data];
                     $enchantmentName = $selectedEnchantment["name"];
+                    $enchantmentLevel = $selectedEnchantment["level"];
 
-                    $this->applyEnchantment($player, $enchantmentName, 1);
+                    $this->showLevelSelectionUI($player, $enchantmentName, $enchantmentLevel);
                 }
             });
 
             $form->setTitle("Enchantment Shop");
             $form->setContent("Choose an enchantment to apply:");
-            foreach ($this->enchantments as $enchantment) {
-                $enchantmentName = $enchantment["name"];
+            foreach ($this->enchantments as $key => $enchantment) {
+                $enchantmentName = $enchantment["button"];
                 $form->addButton($enchantmentName);
             }
 
@@ -68,6 +72,21 @@ class EShopCommand extends Command {
         return true;
     }
 
+    public function showLevelSelectionUI(Player $player, string $enchantmentName, int $defaultLevel) {
+        $form = new CustomForm(function (Player $player, ?array $data) use ($enchantmentName) {
+            if ($data !== null && isset($data[0])) {
+                $selectedLevel = (int)$data[0];
+                $this->applyEnchantment($player, $enchantmentName, $selectedLevel);
+            }
+        });
+
+        $form->setTitle("Enchantment Level");
+        $form->addLabel("Select the level for $enchantmentName:");
+        $form->addSlider("Level", 1, 10, 1, $defaultLevel);
+
+        $player->sendForm($form);
+    }
+
     public function applyEnchantment(Player $player, string $enchantmentName, int $level) {
         $item = $player->getInventory()->getItemInHand();
 
@@ -77,7 +96,7 @@ class EShopCommand extends Command {
             $enchantmentInstance = new EnchantmentInstance($enchantment, $level);
             $item->addEnchantment($enchantmentInstance);
             $player->getInventory()->setItemInHand($item);
-            $player->sendMessage("You applied $enchantmentName to your item.");
+            $player->sendMessage("You applied $enchantmentName (Level $level) to your item.");
         } else {
             $player->sendMessage("Invalid enchantment selected. Please try again.");
         }
