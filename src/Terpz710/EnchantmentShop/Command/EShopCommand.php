@@ -41,7 +41,7 @@ class EShopCommand extends Command {
 
     public function execute(CommandSender $sender, string $label, array $args) {
         if ($sender instanceof Player) {
-            $form = new SimpleForm(function (Player $player, ?int $data) use ($args) {
+            $form = new SimpleForm(function (Player $player, ?int $data) {
                 if ($data === null) {
                     return;
                 }
@@ -75,7 +75,7 @@ class EShopCommand extends Command {
         $enchantment = StringToEnchantmentParser::getInstance()->parse($enchantmentName);
 
         if ($enchantment !== null) {
-            $enchantInstance = EnchantmentInstance::getEnchantmentInstance($enchantment, 1);
+            $enchantInstance = EnchantmentInstance($enchantment, 1);
 
             if ($enchantInstance !== null) {
                 $item->addEnchantment($enchantInstance);
