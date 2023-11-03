@@ -18,6 +18,7 @@ use jojoe77777\FormAPI\SimpleForm;
 class EShopCommand extends Command {
     private $plugin;
     private $enchantments = [];
+    private $globalLevel;
 
     public function __construct(Plugin $plugin) {
         parent::__construct("eshop", "Open the Enchantment Shop");
@@ -28,14 +29,16 @@ class EShopCommand extends Command {
 
     private function loadEnchantments() {
         $config = new Config($this->plugin->getDataFolder() . "Shop.yml", Config::YAML);
+
+        $this->globalLevel = $config->get("level", 10);
+
         $enchantmentData = $config->get("enchantments", []);
 
         foreach ($enchantmentData as $enchantment) {
-            if (isset($enchantment["name"], $enchantment["button"], $enchantment["level"])) {
+            if (isset($enchantment["name"], $enchantment["button"])) {
                 $this->enchantments[] = [
                     "name" => $enchantment["name"],
                     "button" => $enchantment["button"],
-                    "level" => (int)$enchantment["level"]
                 ];
             }
         }
@@ -51,9 +54,8 @@ class EShopCommand extends Command {
                 if (isset($this->enchantments[$data])) {
                     $selectedEnchantment = $this->enchantments[$data];
                     $enchantmentName = $selectedEnchantment["name"];
-                    $enchantmentLevel = $selectedEnchantment["level"];
 
-                    $this->showLevelSelectionUI($player, $enchantmentName, $enchantmentLevel);
+                    $this->showLevelSelectionUI($player, $enchantmentName, $this->globalLevel);
                 }
             });
 
