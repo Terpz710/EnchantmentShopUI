@@ -11,6 +11,8 @@ use pocketmine\plugin\Plugin;
 use pocketmine\utils\Config;
 use pocketmine\item\enchantment\StringToEnchantmentParser;
 use pocketmine\item\enchantment\EnchantmentInstance;
+use pocketmine\item\Armor;
+use pocketmine\item\Tool;
 
 use jojoe77777\FormAPI\CustomForm;
 use jojoe77777\FormAPI\SimpleForm;
@@ -92,15 +94,19 @@ class EShopCommand extends Command {
     public function applyEnchantment(Player $player, string $enchantmentName, int $level) {
         $item = $player->getInventory()->getItemInHand();
 
-        $enchantment = StringToEnchantmentParser::getInstance()->parse($enchantmentName);
+        if ($item instanceof Tool || $item instanceof Armor) {
+            $enchantment = StringToEnchantmentParser::getInstance()->parse($enchantmentName);
 
-        if ($enchantment !== null) {
-            $enchantmentInstance = new EnchantmentInstance($enchantment, $level);
-            $item->addEnchantment($enchantmentInstance);
-            $player->getInventory()->setItemInHand($item);
-            $player->sendMessage("You applied $enchantmentName (Level $level) to your item.");
+            if ($enchantment !== null) {
+                $enchantmentInstance = new EnchantmentInstance($enchantment, $level);
+                $item->addEnchantment($enchantmentInstance);
+                $player->getInventory()->setItemInHand($item);
+                $player->sendMessage("You applied $enchantmentName (Level $level) to your item.");
+            } else {
+                $player->sendMessage("Invalid enchantment selected. Please try again.");
+            }
         } else {
-            $player->sendMessage("Invalid enchantment selected. Please try again.");
+            $player->sendMessage("You can only enchant tools and armor items.");
         }
     }
 }
