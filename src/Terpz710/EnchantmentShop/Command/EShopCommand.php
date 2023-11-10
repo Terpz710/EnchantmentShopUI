@@ -80,7 +80,7 @@ class EShopCommand extends Command {
         $form = new CustomForm(function (Player $player, ?array $data) use ($enchantmentName) {
             if ($data !== null && isset($data[0])) {
                 $selectedLevel = (int)$data[0];
-                $this->applyEnchantment($player, $enchantmentName, $selectedLevel);
+                $this->confirmEnchantmentUI($player, $enchantmentName, $selectedLevel);
             }
         });
 
@@ -89,6 +89,22 @@ class EShopCommand extends Command {
         $form->addSlider("Level", 1, 10, 1, $defaultLevel);
 
         $player->sendForm($form);
+    }
+
+    public function confirmEnchantmentUI(Player $player, string $enchantmentName, int $selectedLevel) {
+        $confirmationForm = new CustomForm(function (Player $player, ?array $data) use ($enchantmentName, $selectedLevel) {
+            if ($data !== null && isset($data[0]) && $data[0] === true) {
+                $this->applyEnchantment($player, $enchantmentName, $selectedLevel);
+            } else {
+                $player->sendMessage("Enchantment canceled.");
+            }
+        });
+
+        $confirmationForm->setTitle("Confirm Enchantment");
+        $confirmationForm->addLabel("Confirm applying $enchantmentName (Level $selectedLevel)?");
+        $confirmationForm->addToggle("Confirm", true);
+
+        $player->sendForm($confirmationForm);
     }
 
     public function applyEnchantment(Player $player, string $enchantmentName, int $level) {
